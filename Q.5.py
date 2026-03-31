@@ -6,60 +6,33 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.metrics import precision_score, recall_score, f1_score
 
-df = pd.read_csv("filled_test.csv", header="infer")
+df = pd.read_csv("heart.csv", header="infer")
 
-df['Loan_Status'] = (df['Credit_History'] > 0).astype(int) 
-df = df.dropna(subset=['Loan_Status'])
+X=df.iloc[:,:-1] #input data
+y=df.iloc[:,-1] #target data
 
-# 3. Convert categorical → numerical
-# Binary encoding
-df['Gender'] = df['Gender'].map({'Male': 1, 'Female': 0})
-df['Married'] = df['Married'].map({'Yes': 1, 'No': 0})
-df['Education'] = df['Education'].map({'Graduate': 1, 'Not Graduate': 0})
-df['Self_Employed'] = df['Self_Employed'].map({'Yes': 1, 'No': 0})
-df['Loan_Status'] = df['Loan_Status'].map({'Y': 1, 'N': 0})
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,stratify=y)
 
-# Dependents column fix (3+ → 3)
-df['Dependents'] = df['Dependents'].replace('3+', 3).astype(int)
+k=int(input("Enter the number of nearest neighbours to be used, i.e. k:"))
 
-# One-hot encoding for Property_Area
-df = pd.get_dummies(df, columns=['Property_Area'], drop_first=True)
+#creating instance of a class
+model=KNeighborsClassifier(n_neighbors=k, weights='distance')
 
-X = df.drop(columns=['Loan_Status', 'Credit_History', 'Loan_ID'])
-y = df['Loan_Status'] 
+#training the classifier
+model.fit(X_train,y_train)
 
-print(df.head())
+#predicting from the trained classifier
+pred=model.predict(X_test)
 
-# -----------------------------
-# 1. Split data (80% train, 20% test)
-# -----------------------------
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-
-# -----------------------------
-# 2. Train KNN model
-# -----------------------------
-model = KNeighborsClassifier(n_neighbors=5)
-model.fit(X_train, y_train)
-
-# -----------------------------
-# 3. Make predictions
-# -----------------------------
-y_pred = model.predict(X_test)
-
-# -----------------------------
-# 4. Evaluate model
-# -----------------------------
-accuracy = accuracy_score(y_test, y_pred)
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
-f1 = f1_score(y_test, y_pred)
-
-# -----------------------------
-# 5. Print results
-# -----------------------------
+from sklearn.metrics import accuracy_score, classification_report
+#performance metrics
+accuracy=accuracy_score(y_test,pred)
 print("Accuracy:", accuracy)
-print("Precision:", precision)
-print("Recall:", recall)
-print("F1 Score:", f1)
+print("Precision:", precision_score(y_test, pred, average='weighted'))
+print("Recall:", recall_score(y_test, pred, average='weighted'))
+print("F1-score:", f1_score(y_test, pred, average='weighted'))
+
+print("\nClassification Report:\n")
+print(classification_report(y_test,pred))
+
+
